@@ -3,24 +3,27 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./MyToken.sol";
+import {GlockToken} from "./GlockToken.sol";
 
 contract TokenSale is Ownable {
-    MyToken public token;
+    GlockToken public token;
     uint256 public tokenPrice;
     uint256 public saleStart;
     uint256 public saleEnd;
+    bool public closed;
 
-    constructor(MyToken _token, uint256 _tokenPrice, uint256 _saleDuration) {
+    constructor(GlockToken _token, uint256 _tokenPrice, uint256 _saleDuration, address initialOwner) Ownable(initialOwner) {
         token = _token;
         tokenPrice = _tokenPrice;
         saleStart = block.timestamp;
         saleEnd = saleStart + _saleDuration;
     }
 
-    function buyTokens(uint256 _numberOfTokens) public payable {
+    function buyTokens() public payable {
         require(block.timestamp >= saleStart && block.timestamp <= saleEnd, "Sale is not open");
-        require(msg.value == _numberOfTokens * tokenPrice, "Incorrect Ether value");
+
+        uint256 _numberOfTokens = msg.value * tokenPrice;
+
         require(token.balanceOf(address(this)) >= _numberOfTokens, "Not enough tokens left");
 
         token.transfer(msg.sender, _numberOfTokens);
@@ -37,5 +40,7 @@ contract TokenSale is Ownable {
 
         // Transfer collected Ethers to owner
         payable(owner()).transfer(address(this).balance);
+
+        closed = true;
     }
 }
