@@ -1,5 +1,5 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
-import { assert, expect } from 'chai'
+import { expect } from 'chai'
 import { ethers } from 'hardhat'
 
 describe('TokenSale', function () {
