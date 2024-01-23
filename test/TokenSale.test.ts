@@ -1,5 +1,5 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
-import { expect } from 'chai'
+import { assert, expect } from 'chai'
 import { ethers } from 'hardhat'
 
 describe('TokenSale', function () {
@@ -48,15 +48,22 @@ describe('TokenSale', function () {
 
     // Transfer 100 tokens from the current account to the token sale contract.
     // This is done to supply the token sale contract with tokens that it can sell.
-    await glockToken.transfer(await tokenSale.getAddress(), 100)
+    await glockToken.transfer(
+      await tokenSale.getAddress(),
+      ethers.parseEther('100')
+    )
 
     // Simulate a user (otherAccount) buying tokens from the token sale contract.
     // The user is sending 1 Ether to buy tokens
-    await tokenSale.connect(otherAccount).buyTokens({ value: 1 })
+    await tokenSale
+      .connect(otherAccount)
+      .buyTokens({ value: ethers.parseEther('1') })
 
     // Check that the user's token balance has increased by 1.
     // This means that the user should have received 1 token from the token sale
-    expect(await glockToken.balanceOf(otherAccount.address)).to.equal(1)
+    expect(await glockToken.balanceOf(otherAccount.address)).to.equal(
+      ethers.parseEther('1')
+    )
 
     // Get the address of the token sale contract.
     const tokenSaleAddress = await tokenSale.getAddress()
@@ -65,7 +72,7 @@ describe('TokenSale', function () {
     const tokenSaleBalance = await ethers.provider.getBalance(tokenSaleAddress)
 
     // Check that the Ether balance of the token sale contract is 1.
-    expect(tokenSaleBalance).to.equal(1)
+    expect(tokenSaleBalance).to.equal(ethers.parseEther('1'))
   })
 
   it('allows the owner to end the sale', async () => {
@@ -89,9 +96,9 @@ describe('TokenSale', function () {
       .buyTokens({ value: ethers.parseEther('1') })
 
     // It should not be possible to end the sale before we reach the sale end time
-    await expect(tokenSale.connect(owner).endSale()).to.be.revertedWith(
-      'Sale is not over yet'
-    )
+    await expect(
+      tokenSale.connect(owner).endSale()
+    ).to.be.revertedWithCustomError(tokenSale, 'SaleNotOverYet')
 
     // Fast forward 1 hour
     await ethers.provider.send('evm_increaseTime', [3_600])
@@ -113,6 +120,17 @@ describe('TokenSale', function () {
 
     // Check that the owner's Ether balance has increased by the Ether collected in the sale
     expect(finalOwnerEtherBalance).to.be.gt(initialOwnerEtherBalance)
+  })
+
+  it.only('tries to transfer 0 ether', async () => {
+    const { tokenSale, glockToken, otherAccount } = await loadFixture(
+      deployTokenSale
+    )
+
+    await glockToken.transfer(
+      await tokenSale.getAddress(),
+      ethers.parseEther('0')
+    )
   })
 })
 

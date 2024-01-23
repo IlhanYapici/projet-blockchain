@@ -19,18 +19,28 @@ contract TokenSale is Ownable {
         saleEnd = saleStart + _saleDuration;
     }
 
+    error SaleNotOpen();
+    error NotEnoughTokensLeft();
+    error SaleNotOverYet();
+
     function buyTokens() public payable {
-        require(block.timestamp >= saleStart && block.timestamp <= saleEnd, "Sale is not open");
+      if(!(block.timestamp >= saleStart && block.timestamp <= saleEnd)) {
+        revert SaleNotOpen();
+      }
 
-        uint256 _numberOfTokens = msg.value * tokenPrice;
+      uint256 _numberOfTokens = msg.value * tokenPrice;
 
-        require(token.balanceOf(address(this)) >= _numberOfTokens, "Not enough tokens left");
+      if(!(token.balanceOf(address(this)) >= _numberOfTokens)) {
+        revert NotEnoughTokensLeft();
+      }
 
-        token.transfer(msg.sender, _numberOfTokens);
+      token.transfer(msg.sender, _numberOfTokens);
     }
 
     function endSale() public onlyOwner {
-        require(block.timestamp > saleEnd, "Sale is not over yet");
+        if(!(block.timestamp > saleEnd)) {
+          revert SaleNotOverYet();
+        }
 
         // Transfer remaining tokens back to owner
         uint256 remainingTokens = token.balanceOf(address(this));
