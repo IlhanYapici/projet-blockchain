@@ -75,6 +75,14 @@ describe('TokenSale', function () {
     expect(tokenSaleBalance).to.equal(ethers.parseEther('1'))
   })
 
+  it('throws an error when buying 0 token', async () => {
+    const { tokenSale, otherAccount } = await loadFixture(deployTokenSale)
+
+    await expect(
+      tokenSale.connect(otherAccount).buyTokens({ value: 0 })
+    ).to.be.revertedWithCustomError(tokenSale, 'InvalidTokenAmount')
+  })
+
   it('allows the owner to end the sale', async () => {
     const { tokenSale, owner, glockToken, otherAccount } = await loadFixture(
       deployTokenSale
@@ -120,17 +128,6 @@ describe('TokenSale', function () {
 
     // Check that the owner's Ether balance has increased by the Ether collected in the sale
     expect(finalOwnerEtherBalance).to.be.gt(initialOwnerEtherBalance)
-  })
-
-  it.only('tries to transfer 0 ether', async () => {
-    const { tokenSale, glockToken, otherAccount } = await loadFixture(
-      deployTokenSale
-    )
-
-    await glockToken.transfer(
-      await tokenSale.getAddress(),
-      ethers.parseEther('0')
-    )
   })
 })
 

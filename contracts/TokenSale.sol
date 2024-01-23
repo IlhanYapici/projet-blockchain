@@ -22,10 +22,15 @@ contract TokenSale is Ownable {
     error SaleNotOpen();
     error NotEnoughTokensLeft();
     error SaleNotOverYet();
+    error InvalidTokenAmount();
 
     function buyTokens() public payable {
       if(!(block.timestamp >= saleStart && block.timestamp <= saleEnd)) {
         revert SaleNotOpen();
+      }
+
+      if(!(msg.value > 0)) {
+        revert InvalidTokenAmount();
       }
 
       uint256 _numberOfTokens = msg.value * tokenPrice;
